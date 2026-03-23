@@ -82,7 +82,7 @@ You must perform a writeback check immediately upon reaching a task boundary. Do
 1. **Reusable Artifact Created:** You generated a new script, template, prompt, configuration, helper document, or other reusable file (for example in `tmp/` or `scripts/`).
 2. **Important Decision or Recalibration:** Strategy, scope, workflow rules, filters, or target parameters were updated, narrowed, or meaningfully reinterpreted.
 3. **Project State Changed:** You changed project state, regenerated or updated a meaningful output, fixed a configuration, verified a previously uncertain outcome, or completed a meaningful execution step whose result should be recoverable later.
-4. **Durable User Input:** Jan stated a new preference, constraint, plan, concern, or other durable context that should affect future execution.
+4. **Durable User Input:** the user stated a new preference, constraint, plan, concern, or other durable context that should affect future execution.
 
 ### Execution Rule
 
