@@ -77,7 +77,7 @@ Otherwise, do not write.
 
 ## Mandatory Trigger Points
 
-You must perform a writeback check immediately upon reaching a task boundary. Do not wait for the conversation to end. A task boundary is defined by any of the following events:
+You must perform a writeback check immediately upon reaching a task boundary. Do not wait for the conversation to end. **If the check classifies anything as daily, topic, or both, execute the write immediately before proceeding to the next task or returning results.** A classification of "none" is valid only when the heuristics genuinely indicate no durable value. A task boundary is defined by any of the following events:
 
 1. **Reusable Artifact Created:** You generated a new script, template, prompt, configuration, helper document, or other reusable file (for example in `tmp/` or `scripts/`).
 2. **Important Decision or Recalibration:** Strategy, scope, workflow rules, filters, or target parameters were updated, narrowed, or meaningfully reinterpreted.
@@ -87,6 +87,16 @@ You must perform a writeback check immediately upon reaching a task boundary. Do
 ### Execution Rule
 
 Write back incrementally during long or multi-topic sessions. If you are uncertain whether something warrants canonical memory, default to appending a short, concrete bullet point to the daily note.
+
+### Subagent Writeback Rule
+
+Subagents must apply the same Mandatory Trigger Points as the main session. Before producing your final response:
+1. Review artifacts created, decisions made, and state changes during execution.
+2. Classify each per the standard logic (daily / topic / both / none).
+3. Execute any resulting writes before your final message.
+4. Report what you wrote (file paths and classification) in your final message so the parent session can verify.
+
+The subagent that produced the artifact is the primary owner of the write. The parent session's Session-End Writeback Gate (AGENTS.md) serves as a fallback — if a subagent did not persist durable results, the parent must catch and write them.
 
 ## Daily Note Rules
 
