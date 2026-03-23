@@ -7,14 +7,19 @@ description: "Compact writeback policy for OpenClaw memory files. Use when decid
 
 Write only high-signal memory. Default is **do not write** unless the session produced something worth retrieving later.
 
+## Canonical Ownership
+
+**Topic files are the canonical durable store.** Any information that should be retrievable by subject — not by date — belongs in a topic file. Daily notes are a minimal session ledger, not a content store. When in doubt between topic file and daily note, the answer is topic file. Daily note is only for dated event traces.
+
 ## Storage Targets
 
-- **Daily note:** `memory/YYYY-MM-DD.md`
-  - Append-only log for session events, outcomes, decisions, blockers, and short facts tied to a day.
-  - **Never rewrite, dedupe in place, or reorganize old entries.** Only append.
-- **Topic file:** `memory/*.md`
-  - Durable subject memory: projects, infrastructure, habits, preferences, recurring procedures, verified facts.
+- **Topic file:** `memory/*.md` — **primary durable storage**
+  - Durable subject memory: projects, infrastructure, habits, preferences, recurring procedures, verified facts, reusable lessons, personal context.
   - Update when the fact should survive beyond the day and be searchable by topic.
+- **Daily note:** `memory/YYYY-MM-DD.md` — **session ledger only**
+  - Minimal append-only log: what sessions ran, what tasks completed, what was delivered.
+  - **Not a content store.** Do not write durable facts, preferences, lessons, or context here unless they are purely time-bound events.
+  - **Never rewrite, dedupe in place, or reorganize old entries.** Only append.
 - **`MEMORY.md`:** rare. Only for high-level orientation or durable global constraints. Prefer topic files instead.
 
 ## Memory Hygiene
@@ -23,39 +28,9 @@ Prefer updating, merging, or summarizing existing durable memory over creating p
 
 ## Classification Logic
 
-### Write to daily note only
-Use `memory/YYYY-MM-DD.md` when the information is time-bound, session-bound, or mainly useful as a dated trail.
+Classify in this order. Stop at the first match.
 
-Examples:
-- what was worked on today
-- a bug investigated, command tried, or temporary blocker
-- a meeting/result/status change for today
-- a short decision note with date context
-- reminder-like facts that may later be distilled
-
-### Write to topic file only
-Use `memory/<topic>.md` when the information is durable and date is not the main retrieval key.
-
-Examples:
-- stable project architecture or API facts
-- environment setup details
-- persistent user preferences or constraints
-- recurring workflow instructions
-- lessons learned that should be found by subject later
-
-### Write to both
-Write **both** when the session created a durable fact **and** the dated event matters.
-
-Pattern:
-1. Append a short dated entry to today's daily note.
-2. Add/update the durable distilled fact in the relevant topic file.
-
-Examples:
-- today a service moved to a new port, and that port should be remembered permanently
-- today the user changed a standing preference
-- today a project decision was made that affects future work
-
-### Do not write
+### 1. Do not write
 Skip writeback when the content is low-value, obvious, recoverable from files, or transient chatter.
 
 Do **not** write:
@@ -65,6 +40,41 @@ Do **not** write:
 - speculative ideas not adopted
 - trivial completions ("opened file", "ran command")
 
+### 2. Write to topic file only (default for durable content)
+Use `memory/<topic>.md` when the information is durable and should be retrievable by subject.
+
+This is the **default target for anything worth remembering.** If it passes the "do not write" filter, it almost certainly belongs here.
+
+Examples:
+- stable project architecture or API facts
+- environment setup details
+- persistent user preferences or constraints
+- recurring workflow instructions
+- lessons learned that should be found by subject later
+- personal context, goals, psychology notes
+- infrastructure state, service configs, tool decisions
+
+### 3. Write to both (rare — requires explicit justification)
+Write **both** only when a durable fact was created **and** the specific date of the event materially matters for future retrieval.
+
+Pattern:
+1. Add/update the durable distilled fact in the relevant topic file (primary).
+2. Append a one-line dated reference to today's daily note (secondary).
+
+Examples:
+- today a service moved to a new port — port in topic file, migration event in daily note
+- today the user changed a standing preference — preference in topic file, change event in daily note
+
+### 4. Write to daily note only (session ledger entries)
+Use `memory/YYYY-MM-DD.md` **only** for information that is purely time-bound and has no durable subject-retrieval value.
+
+Examples:
+- what sessions ran and what tasks were completed today
+- a temporary blocker that was resolved in the same session
+- a session checkpoint for continuity recovery
+
+**Anti-pattern:** If you find yourself writing a durable fact, preference, lesson, decision, or piece of personal context to the daily note because you are unsure where it goes — stop. Find or create the right topic file instead. The daily note is not an uncertainty sink.
+
 ## Heuristics
 
 Write if at least one is true:
@@ -72,6 +82,9 @@ Write if at least one is true:
 - future retrieval would save time or prevent repeated mistakes
 - it changes constraints, preferences, infra, process, or project state
 - it records a meaningful decision, correction, or lesson
+- the session produced a durable artifact, configuration change, or state change
+
+**Mandatory write after durable output:** If a Mandatory Trigger Point fired (artifact created, decision made, state changed, durable user input), a classification of "none" requires explicit justification — the content must genuinely fail all heuristic tests. The trigger point firing creates a strong presumption that something should be written.
 
 Otherwise, do not write.
 
@@ -86,7 +99,9 @@ You must perform a writeback check immediately upon reaching a task boundary. Do
 
 ### Execution Rule
 
-Write back incrementally during long or multi-topic sessions. If you are uncertain whether something warrants canonical memory, default to appending a short, concrete bullet point to the daily note.
+Write back incrementally during long or multi-topic sessions. Do not batch writes to session end.
+
+**Uncertainty resolution:** If you are uncertain whether something warrants a write, apply the heuristics. If the heuristics say write, route it to the correct target per Classification Logic. If you are uncertain about *which* topic file, find the best match or create one — do not route to the daily note as a fallback. The daily note is never a classification escape hatch.
 
 ### Subagent Writeback Rule
 
@@ -103,19 +118,21 @@ The subagent that produced the artifact is the primary owner of the write. The p
 - File path: `memory/YYYY-MM-DD.md`
 - If missing, create it.
 - **Append only** at end of file.
-- Keep entries compact and factual.
+- Keep entries compact and factual — one line per event.
 - Prefer timestamped bullets when useful.
+- **Content ceiling:** Each entry should be at most 1–2 lines. If you need more, the content belongs in a topic file, not here.
+- **Self-check:** If a daily note exceeds ~30 lines in a day, review whether durable content is leaking in that should be in topic files.
 
 Suggested format:
 
 ```md
-- HH:MM brief fact / decision / result
+- HH:MM brief event / task completed / artifact delivered
 ```
 
 or, if no time is needed:
 
 ```md
-- Brief fact / decision / result
+- Brief event / task completed / artifact delivered
 ```
 
 ## Topic File Rules
@@ -143,9 +160,9 @@ If unsure, use a topic file instead.
 
 ## Writeback Procedure
 
-1. Classify: daily / topic / both / none.
-2. If daily is needed, append a compact bullet to `memory/YYYY-MM-DD.md`.
-3. If topic is needed, update or create the best matching `memory/*.md` file.
+1. Classify per Classification Logic: none / topic / both / daily.
+2. If topic is needed, update or create the best matching `memory/*.md` file.
+3. If daily is needed, append a compact bullet to `memory/YYYY-MM-DD.md`.
 4. Avoid duplicating large text across files; daily note gets the event, topic file gets the distilled durable fact.
 5. Do not perform cleanup or retroactive reorganization as part of normal writeback.
 
